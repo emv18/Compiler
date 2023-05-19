@@ -1,6 +1,0 @@
-constantes real 3.4;
-variables alfabetico := "hola";
-constantes logico := verdadero;
-variables entero := 3;
-
-// Este es un comentario

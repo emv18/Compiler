@@ -2,7 +2,7 @@ import os
 
 class Lexer:     
     def __init__(self, name_file):
-        self.name_file= name_file
+        self.name_file= name_file # This is the file with the code to analize
 
         # Tokens
         self.t_delim= 'delim'
@@ -11,6 +11,8 @@ class Lexer:
         self.t_opLog= 'opLog'
         self.t_palRes= 'palRes'
         self.t_opAsig= 'opAsig'
+        self.t_cteReal= 'CteReal'
+        self.t_cteEnt= 'CteEnt'
         self.delim= {'.': self.t_delim, ',': self.t_delim, ';': self.t_delim, '(': self.t_delim, ')': self.t_delim, '[': self.t_delim, ']': self.t_delim, ':': self.t_delim, '<nl>': self.t_delim, '<tab>': self.t_delim} # This are the delimiter
         self.opArit= {'+': self.t_opArit, '-': self.t_opArit, '*': self.t_opArit, '/': self.t_opArit, '%': self.t_opArit, '^': self.t_opArit} # These are arithmetic operators
         self.opRel={'=': self.t_opRel, '<>': self.t_opRel, '<': self.t_opRel, '>': self.t_opRel, '<=': self.t_opRel, '>=': self.t_opRel} # These are relational operators
@@ -53,17 +55,18 @@ class Lexer:
                        'verdadero': self.t_palRes, 
                        'falso': self.t_palRes} # These are reserved words
         self.opAsig= {':=': self.t_opAsig} # This is the assignation operator
+        self.nums= '1234567890' # This are valid numbers
+        self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal}
 
     def pass_lex(self, program):
         lexs= []
         tokens= []
-        #cont= 0
         for line in program:
             line= line.split(" ")
             for word in line:
-                #print(str(cont) + ": " + word + "\n")
-                #cont+= 1
-                if word in self.delim:
+                if word == "":
+                    continue
+                elif word in self.delim:
                     lexs.append(word)
                     tokens.append(self.delim[word])
                 elif word in self.opArit: 
@@ -81,12 +84,48 @@ class Lexer:
                 elif word in self.opAsig: 
                     lexs.append(word)
                     tokens.append(self.opAsig[word])
+                else:
+                    valid, v_type= self.checkChar(word)
+                    if valid: 
+                        if v_type in self.ctes:
+                            lexs.append(word)
+                            tokens.append(self.ctes[v_type])
         self.create_file(lexs, tokens)
 
+    def checkChar(self, word):
+        valid, v_type= self.isNumber(word)
+        return valid, v_type
+
+    def isNumber(self, word):      
+        isNumber= True
+        type= self.t_cteEnt
+        while(isNumber):
+            for char in word:
+                if char in self.nums: continue
+                elif char == '.': 
+                    isNumber, type= self.isFloat(word)
+                    return isNumber, type
+                else: 
+                    isNumber= False
+                    return isNumber, type
+            break
+        return isNumber, type
+    
+    def isfloat(self, word):
+        isFloat= True
+        type= self.t_cteReal
+        while(isFloat):
+            for char in word:
+                if char in self.nums: continue
+                elif char == '.': continue
+                else: 
+                    isFloat= False
+                    return False, type
+            break
+        return isFloat, type
+    
     def create_file(self, lexers, tokens):
-        #print(lexers)
-        #print(tokens)
-        os.remove("./" + self.name_file)
+        os.remove(self.name_file)
         space_words= 38
         with open(self.name_file, "w") as f:
             f.write('--------------------------------------------\n')
@@ -103,147 +142,7 @@ class Lexer:
                     space+= 1
                 f.write(tokens[i] + '\n') 
 
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------
-    def identifyNumbers(self):      
-        numbers = []
-        for char in self:
-            if(char.split(';')): identifier= char.split(';')
-            identifier= identifier[0].split(" ")
-            for i in identifier:
-                if i.isdigit() or Compiler.isfloat(self, i):
-                    numbers.append(i)
-                    continue
-        return numbers
-    
-    def isfloat(self, num):
-        try:
-            float(num)
-            return True
-        except ValueError:
-            return False
-        
-    def val_const(self, line, asig):
-        #line= self.code[0]
-        
-        line_split= line.split(" ")
-        line_split.pop(0)
-        line_split= " ".join(line_split)
-        word= line_split.split(asig)
-        if(len(word) > 1):
-            lexema= [asig, "<Ident>"]
-            self.lexemas.append(lexema)
-        else:
-            error= [self.line, asig, "<lexico> Se esperaba "+asig, line]
-            self.errores.append(error)                          
-        return self.errores
-    
-    def val_var(self):
-        return 'variable'
-    
-    def val_real(self):
-        return 'real'
-    
-    def val_alf(self):
-        return 'alfabetico'
-    
-    def val_log(self):
-        return 'logico'
-    
-    def val_ent(self):
-        return 'entero'
-    
-    def val_fun(self):
-        return 'funcion'
-    
-    def val_ini(self):
-        return 'inicia'
-    
-    def val_fin(self):
-        return 'fin'
-    
-    def val_de(self):
-        return 'de'
-    
-    def val_proc(self):
-        return 'procedimiento'
-    
-    def val_reg(self):
-        return 'regresa'
-    
-    def val_si(self):
-        return 0
-    
-    def val_hacer(self):
-        return 0
-    
-    def val_sino(self):
-        return 0
-    
-    def val_cuando(self):
-        return 0
-    
-    def val_el(self):
-        return 0
-    
-    def val_valor(self):
-        return 0
-    
-    def val_sea(self):
-        return 0
-    
-    def val_otro(self):
-        return 0
-    
-    def val_desde(self):
-        return 0
-    
-    def val_hasta(self):
-        return 0
-    
-    def val_incr(self):
-        return 0
-    
-    def val_decr(self):
-        return 0
-    
-    def val_rep(self):
-        return 0
-    
-    def val_que(self):
-        return 0
-    
-    def val_mien(self):
-        return 0
-    
-    def val_se(self):
-        return 0
-    
-    def val_cum(self):
-        return 0
-    
-    def val_cont(self):
-        return 0
-    
-    def val_inte(self):
-        return 0
-    
-    def val_limpia(self):
-        return 0
-    
-    def val_lee(self):
-        return 0
-    
-    def val_imprime(self):
-        return 0
-    
-    def val_imprimenl(self):
-        return 0
-    
-    def val_verdadero(self):
-        return 0
-    
-    def val_falso(self):
-        return 0
+
     '''
     def identifyComments(self):
         comments= []
@@ -259,56 +158,3 @@ class Lexer:
                 if(i == ''): comments.remove(i)
         return comments
     '''
-
-    def identifyVariables(self):
-        variables= []
-        variables_res= ['real', 'alfabetico', 'logico', 'entero']
-        for char in self:
-            var= char.split(' ')
-            if(var[0] == 'constantes' or var[0] == 'variables'):
-                for i in variables_res:
-                    if(i == var[1]):
-                        if(var[2] == ':='):
-                            if(var[1] == 'entero'):
-                                number= var[3].split(';')
-                                number= number[0]
-                                semicolon= var[3].split('\n')
-                                semicolon= semicolon[0]
-                                if(number.isdigit()):
-                                    if(semicolon[-1] == ';'):
-                                        variables.append(var[0] + " " +var[1])
-                                else: 
-                                    continue
-                            elif(var[1] == 'real'):
-                                number= var[3].split(';')
-                                number= number[0]
-                                semicolon= var[3].split('\n')
-                                semicolon= semicolon[0]
-                                if(Compiler.isfloat(self, number)):
-                                    if(semicolon[-1] == ';'):
-                                        variables.append(var[0] + " " +var[1])
-                                else: 
-                                    continue
-                            elif(var[1] == 'alfabetico'):
-                                alfa= var[3].split(';')
-                                alfa= alfa[0]
-                                alfa_init= alfa[0]
-                                alfa_end= alfa[-1]
-                                semicolon= var[3].split('\n')
-                                semicolon= semicolon[0]
-                                if(alfa_init == '"' and alfa_end == '"'):
-                                    if(semicolon[-1] == ';'):
-                                        variables.append(var[0] + " " +var[1])
-                                else: 
-                                    continue
-                            elif(var[1] == 'logico'):
-                                logic= var[3].split(';')
-                                logic= logic[0]
-                                semicolon= var[3].split('\n')
-                                semicolon= semicolon[0]
-                                if(logic == 'verdadero' or logic == 'falso'):
-                                    if(semicolon[-1] == ';'):
-                                        variables.append(var[0] + " " +var[1])
-                                else: 
-                                    continue
-        return variables

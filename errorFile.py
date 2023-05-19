@@ -5,7 +5,7 @@ class Error:
         self.name_file= name_file
     
     def create_file(self, num_lines, errors, descr, lines):
-        os.remove("./" + self.name_file)
+        os.remove(self.name_file)
         space_words= 38
         with open(self.name_file, "w") as f:
             f.write('------------------------------------------------------------------------\n')
