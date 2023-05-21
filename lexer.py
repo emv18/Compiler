@@ -13,6 +13,7 @@ class Lexer:
         self.t_opAsig= 'opAsig'
         self.t_cteReal= 'CteReal'
         self.t_cteEnt= 'CteEnt'
+        self.t_ident= 'Ident'
         self.delim= {'.': self.t_delim, ',': self.t_delim, ';': self.t_delim, '(': self.t_delim, ')': self.t_delim, '[': self.t_delim, ']': self.t_delim, ':': self.t_delim, '<nl>': self.t_delim, '<tab>': self.t_delim} # This are the delimiter
         self.opArit= {'+': self.t_opArit, '-': self.t_opArit, '*': self.t_opArit, '/': self.t_opArit, '%': self.t_opArit, '^': self.t_opArit} # These are arithmetic operators
         self.opRel={'=': self.t_opRel, '<>': self.t_opRel, '<': self.t_opRel, '>': self.t_opRel, '<=': self.t_opRel, '>=': self.t_opRel} # These are relational operators
@@ -59,11 +60,22 @@ class Lexer:
         self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal}
 
     def pass_lex(self, program):
+        prev_word= ''
         lexs= []
         tokens= []
         for line in program:
             line= line.split(" ")
+            if line[0] in self.palRes:
+                prev_word= line[0]
+            #print(line[0])
+            #print(line[0])
             for word in line:
+                n= word.split("\t")
+                if(len(n)>1):
+                    for w in n:
+                        if w != '':
+                            word= w
+                word= word.lower()
                 if word == "":
                     continue
                 elif word in self.delim:
@@ -81,21 +93,99 @@ class Lexer:
                 elif word in self.palRes: 
                     lexs.append(word)
                     tokens.append(self.palRes[word])
-                elif word in self.opAsig: 
-                    lexs.append(word)
-                    tokens.append(self.opAsig[word])
                 else:
-                    valid, v_type= self.checkChar(word)
+                    valid, parms= self.checkChar(word, prev_word)
                     if valid: 
-                        if v_type in self.ctes:
-                            lexs.append(word)
-                            tokens.append(self.ctes[v_type])
+                        if prev_word == 'constantes':
+                            for parm in parms:
+                                first_ch= list(parm)[0]
+                                if first_ch in self.nums: lexs.append(parm)
+                                elif parm == self.t_cteEnt or parm == self.t_cteReal: tokens.append(parm)
+                                elif parm in self.opAsig: 
+                                    lexs.append(parm)
+                                    tokens.append(self.opAsig[parm])
+                                elif parm in self.delim:
+                                    lexs.append(parm)
+                                    tokens.append(self.delim[parm])
+                                else:
+                                    lexs.append(parm)
+                                    tokens.append(self.t_ident)
+                        elif prev_word == 'variables':
+                            for parm in parms:
+                                if parm in self.palRes:
+                                    lexs.append(parm)
+                                    tokens.append(self.palRes[parm])
+                                elif parm in self.delim:
+                                    lexs.append(parm)
+                                    tokens.append(self.delim[parm])
+                                else:
+                                    lexs.append(parm)
+                                    tokens.append(self.t_ident)
         self.create_file(lexs, tokens)
 
-    def checkChar(self, word):
-        valid, v_type= self.isNumber(word)
-        return valid, v_type
+    def checkChar(self, word, prev_word):
+        valid= True
+        parms= []
+        if prev_word == 'constantes':
+            valid, parms= self.isConstant(word)
+        elif prev_word == 'variables':
+            valid, parms= self.isVariable(word)
+        return valid, parms
+    
+    def isConstant(self, word):
+        valid_const= True
+        opAsig= []
+        dot_comma= ';'
+        new_word= []
+        nums= []
+        parms= []
+        for char in word:
+            if char == dot_comma: break
+            elif char == ':' or char == '=': opAsig.append(char)
+            elif char in self.nums or char == '.': nums.append(char)
+            else: new_word.append(char)
+        
+        ident= "".join(new_word)
+        num= "".join(nums)
+        v_opAsig= "".join(opAsig)
+        valid_num, num_type= self.isNumber(num)
+        parms.append(ident)
+        parms.append(v_opAsig) 
+        parms.append(num) 
+        parms.append(num_type)
+        parms.append(dot_comma)
 
+        return valid_const, parms
+    
+    def isVariable(self, word):
+        valid_var= True
+        dot_comma= ';'
+        two_dots= ':'
+        comma= ','
+        ident= ''
+        idents= []
+        parms= []
+        for char in word:
+            #print(char)
+            if char == dot_comma: 
+                ident= "".join(idents)
+                parms.append(ident)
+                parms.append(char)  
+                break
+            elif char == comma: 
+                ident= "".join(idents)
+                idents= []
+                parms.append(ident)
+                parms.append(char)
+            elif char == two_dots: 
+                ident= "".join(idents)
+                idents= []
+                parms.append(ident)
+                parms.append(char)
+            else: idents.append(char)
+
+        return valid_var, parms
+    
     def isNumber(self, word):      
         isNumber= True
         type= self.t_cteEnt
@@ -111,7 +201,7 @@ class Lexer:
             break
         return isNumber, type
     
-    def isfloat(self, word):
+    def isFloat(self, word):
         isFloat= True
         type= self.t_cteReal
         while(isFloat):
