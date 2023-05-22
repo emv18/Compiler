@@ -4,6 +4,9 @@ class Lexer:
     def __init__(self, name_file):
         self.name_file= name_file # This is the file with the code to analize
 
+        self.v_alfa= False
+        self.dot_comma= ';'
+
         # Tokens
         self.t_delim= 'delim'
         self.t_opArit= 'opArit'
@@ -14,6 +17,7 @@ class Lexer:
         self.t_cteReal= 'CteReal'
         self.t_cteEnt= 'CteEnt'
         self.t_ident= 'Ident'
+        self.t_cteAlfa= 'CteAlfa'
         self.delim= {'.': self.t_delim, ',': self.t_delim, ';': self.t_delim, '(': self.t_delim, ')': self.t_delim, '[': self.t_delim, ']': self.t_delim, ':': self.t_delim, '<nl>': self.t_delim, '<tab>': self.t_delim} # This are the delimiter
         self.opArit= {'+': self.t_opArit, '-': self.t_opArit, '*': self.t_opArit, '/': self.t_opArit, '%': self.t_opArit, '^': self.t_opArit} # These are arithmetic operators
         self.opRel={'=': self.t_opRel, '<>': self.t_opRel, '<': self.t_opRel, '>': self.t_opRel, '<=': self.t_opRel, '>=': self.t_opRel} # These are relational operators
@@ -57,26 +61,37 @@ class Lexer:
                        'falso': self.t_palRes} # These are reserved words
         self.opAsig= {':=': self.t_opAsig} # This is the assignation operator
         self.nums= '1234567890' # This are valid numbers
-        self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal}
+        self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal, 'CteAlfa': self.t_cteAlfa}
 
     def pass_lex(self, program):
-        prev_word= ''
         lexs= []
         tokens= []
         for line in program:
-            line= line.split(" ")
-            if line[0] in self.palRes:
-                prev_word= line[0]
-            #print(line[0])
-            #print(line[0])
+            line_alfa= []
+            if '"' not in line:
+                line= line.split(" ")
+            else: 
+                line= list(line)
+                #print(line)
+                for c in line:
+                    if line[0] == ' ':
+                        line.pop(0)
+                line= "".join(line)
+                line_alfa.append(line)
+                line= line_alfa
+                #print(line)
             for word in line:
                 n= word.split("\t")
                 if(len(n)>1):
+                    #print(n)
                     for w in n:
                         if w != '':
                             word= w
                 word= word.lower()
-                if word == "":
+                s= list(word)
+                #print(s)
+                if word == "" or word == ' ' or word == "\t" or s[0] == '':
+                    #print("Aqui hay uno vacio")
                     continue
                 elif word in self.delim:
                     lexs.append(word)
@@ -94,97 +109,191 @@ class Lexer:
                     lexs.append(word)
                     tokens.append(self.palRes[word])
                 else:
-                    valid, parms= self.checkChar(word, prev_word)
+                    valid, parms= self.checkChar(word)
                     if valid: 
-                        if prev_word == 'constantes':
-                            for parm in parms:
+                        for parm in parms:
+                            s= list(parm)
+                            if parm != '':
                                 first_ch= list(parm)[0]
-                                if first_ch in self.nums: lexs.append(parm)
-                                elif parm == self.t_cteEnt or parm == self.t_cteReal: tokens.append(parm)
-                                elif parm in self.opAsig: 
+                            if first_ch in self.nums: lexs.append(parm)
+                            elif parm == self.t_cteEnt or parm == self.t_cteReal: tokens.append(parm)
+                            elif parm in self.opAsig: 
+                                lexs.append(parm)
+                                tokens.append(self.opAsig[parm])
+                            elif parm in self.delim:
+                                lexs.append(parm)
+                                tokens.append(self.delim[parm])
+                            elif parm in self.palRes:
+                                lexs.append(parm)
+                                tokens.append(self.palRes[parm])
+                            elif parm[0] == '"' and parm[-1] == '"':
+                                lexs.append(parm)
+                                tokens.append(self.t_cteAlfa)   
+                            else:
+                                if parm != " ":
+                                    parm= list(parm)
+                                    f_parm= parm[0]
+                                    if f_parm == " ":
+                                        parm.pop(0)
+                                    parm= "".join(parm)
                                     lexs.append(parm)
-                                    tokens.append(self.opAsig[parm])
-                                elif parm in self.delim:
-                                    lexs.append(parm)
-                                    tokens.append(self.delim[parm])
-                                else:
-                                    lexs.append(parm)
-                                    tokens.append(self.t_ident)
-                        elif prev_word == 'variables':
-                            for parm in parms:
-                                if parm in self.palRes:
-                                    lexs.append(parm)
-                                    tokens.append(self.palRes[parm])
-                                elif parm in self.delim:
-                                    lexs.append(parm)
-                                    tokens.append(self.delim[parm])
-                                else:
-                                    lexs.append(parm)
-                                    tokens.append(self.t_ident)
+                                    tokens.append(self.t_ident) 
         self.create_file(lexs, tokens)
-
-    def checkChar(self, word, prev_word):
-        valid= True
-        parms= []
-        if prev_word == 'constantes':
-            valid, parms= self.isConstant(word)
-        elif prev_word == 'variables':
-            valid, parms= self.isVariable(word)
-        return valid, parms
     
-    def isConstant(self, word):
-        valid_const= True
-        opAsig= []
-        dot_comma= ';'
-        new_word= []
+    def checkChar(self, word):
+        prev_char= ''
+        valid= True
+        ident= []
         nums= []
         parms= []
         for char in word:
-            if char == dot_comma: break
-            elif char == ':' or char == '=': opAsig.append(char)
-            elif char in self.nums or char == '.': nums.append(char)
-            else: new_word.append(char)
-        
-        ident= "".join(new_word)
-        num= "".join(nums)
-        v_opAsig= "".join(opAsig)
-        valid_num, num_type= self.isNumber(num)
-        parms.append(ident)
-        parms.append(v_opAsig) 
-        parms.append(num) 
-        parms.append(num_type)
-        parms.append(dot_comma)
-
-        return valid_const, parms
-    
-    def isVariable(self, word):
-        valid_var= True
-        dot_comma= ';'
-        two_dots= ':'
-        comma= ','
-        ident= ''
-        idents= []
-        parms= []
-        for char in word:
-            #print(char)
-            if char == dot_comma: 
-                ident= "".join(idents)
+            if not self.v_alfa:
+                if char == self.dot_comma: 
+                    ident= "".join(ident)
+                    if ident != '':
+                        parms.append(ident)
+                    num= "".join(nums)
+                    if num != '':
+                        valid_num, num_type= self.isNumber(num)
+                        parms.append(num) 
+                        if num_type != '':
+                            parms.append(num_type)
+                    nums= []
+                    parms.append(char)
+                    break
+                elif char in self.nums: nums.append(char)
+                elif char in self.delim: 
+                    ident= "".join(ident)
+                    if ident != '':
+                        parms.append(ident)
+                    ident= []
+                    if char == '.': 
+                        if prev_char in self.nums:
+                            nums.append(char)
+                        else: 
+                            num= "".join(nums)
+                            if num != '':
+                                valid_num, num_type= self.isNumber(num)
+                                parms.append(num) 
+                                if num_type != '':
+                                    parms.append(num_type)
+                            nums= []
+                            parms.append(char)
+                    else: parms.append(char)
+                elif char in self.opArit: 
+                    ident= "".join(ident)
+                    if ident != '':
+                        parms.append(ident)
+                    parms.append(char)
+                    ident= []
+                    num= "".join(nums)
+                    if num != '':
+                        valid_num, num_type= self.isNumber(num)
+                        parms.append(num) 
+                        if num_type != '':
+                            parms.append(num_type)
+                    nums= []
+                elif char in self.opRel: 
+                    if char == '>' and prev_char == '<':
+                        ident.append(prev_char)
+                        ident.append(char)
+                    ident= "".join(ident)
+                    if ident != '':
+                        parms.append(ident)
+                    ident= []
+                    num= "".join(nums)
+                    if num != '':
+                        valid_num, num_type= self.isNumber(num)
+                        parms.append(num) 
+                        if num_type != '':
+                            parms.append(num_type)
+                    nums= []
+                    if char == '=':
+                        if prev_char == ':':
+                            parms.pop()
+                            prev_char+= char
+                            parms.append(prev_char)
+                        else: parms.append(char)
+                elif char in self.opLog: 
+                    if char == 'y' or char == 'o':
+                        if prev_char == ' ' or prev_char == '':
+                            parms.append(char)
+                        else: ident.append(char)
+                    num= "".join(nums)
+                    if num != '':
+                        valid_num, num_type= self.isNumber(num)
+                        parms.append(num) 
+                        if num_type != '':
+                            parms.append(num_type)
+                    nums= []
+                else: 
+                    if char != ' ' and len(parms) != 0 and parms[-1] == 'o' and len(ident) == 0:
+                        parms.pop()
+                        ident.append(prev_char)
+                    elif char != ' ' and len(parms) != 0 and parms[-1] == 'y' and len(ident) == 0:
+                        parms.pop()
+                        ident.append(prev_char)
+                    elif char == '"':
+                        self.v_alfa= True
+                        ident= "".join(ident)
+                        if ident != '':
+                            parms.append(ident)
+                        ident= []
+                        num= "".join(nums)
+                        if num != '':
+                            valid_num, num_type= self.isNumber(num)
+                            parms.append(num) 
+                            if num_type != '':
+                                parms.append(num_type)
+                        nums= []
+                        ident.append(char)
+                        continue
+                    if char != ' ':
+                        ident.append(char)
+                    elif char == ' ':
+                        ident= "".join(ident)
+                        if ident != '':
+                            parms.append(ident)
+                        ident= []
+                        num= "".join(nums)
+                        if num != '':
+                            valid_num, num_type= self.isNumber(num)
+                            parms.append(num) 
+                            if num_type != '':
+                                parms.append(num_type)
+                        nums= []
+            elif self.v_alfa: 
+                ident.append(char)
+                if char == '"':
+                    self.v_alfa= False
+                    ident= "".join(ident)
+                    parms.append(ident)
+                    ident= []
+            prev_char= char
+        if len(parms) != 0 and parms[-1] != self.dot_comma:
+            ident= "".join(ident)
+            if ident != '':
                 parms.append(ident)
-                parms.append(char)  
-                break
-            elif char == comma: 
-                ident= "".join(idents)
-                idents= []
+            num= "".join(nums)
+            if num != '':
+                valid_num, num_type= self.isNumber(num)
+                parms.append(num) 
+                if num_type != '':
+                    parms.append(num_type)
+            nums= []
+        elif len(parms) == 0:
+            ident= "".join(ident)
+            if ident != '':
                 parms.append(ident)
-                parms.append(char)
-            elif char == two_dots: 
-                ident= "".join(idents)
-                idents= []
-                parms.append(ident)
-                parms.append(char)
-            else: idents.append(char)
-
-        return valid_var, parms
+            num= "".join(nums)
+            if num != '':
+                valid_num, num_type= self.isNumber(num)
+                parms.append(num) 
+                if num_type != '':
+                    parms.append(num_type)
+            nums= []
+        if word[0:5] == 'hasta': print(word)
+        return valid, parms
     
     def isNumber(self, word):      
         isNumber= True
@@ -216,11 +325,11 @@ class Lexer:
     
     def create_file(self, lexers, tokens):
         os.remove(self.name_file)
-        space_words= 38
+        space_words= 50
         with open(self.name_file, "w") as f:
-            f.write('--------------------------------------------\n')
-            f.write('Lexema                                Token\n')
-            f.write('--------------------------------------------\n')
+            f.write('--------------------------------------------------------\n')
+            f.write('Lexema                                            Token\n')
+            f.write('--------------------------------------------------------\n')
             for i in range(len(lexers)):
                 space= 0
                 for letter in lexers[i]:
