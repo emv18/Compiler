@@ -1,3 +1,9 @@
+'''
+Compiler
+@Author Eduardo Morales Vizcarra & Diego Alejandro Iñiguez
+'''
+import logging
+
 class Syntatic:
     def __init__(self, lexs, lines):
         self.lines= lines
@@ -17,38 +23,54 @@ class Syntatic:
         self.line_error= []
 
         #Tokens for detect errors
-        self.t_errors= {'procedimiento': 'inicio',
-                        'inicio': 'fin de procedimiento',
-                        'repetir': 'hasta que',
-                        'cuando': 'fin',
-                        'si': 'sino',
+        self.t_errors= {'cuando': 'fin',
+                        'si': 'hacer',
+                        'hacer': 'sino',
                         'sea': 'otro',
                         'desde': 'hasta',
-                        'funcion': 'fin de funcion',
                         '(': ')'}
         
     def passSyn(self):
         prev_word= ''
+        word_init= ''
+        prev_line= 1
         for i in range(len(self.lines)):
+            current_line= self.lines[i]
             word= self.lexs[i]
-            if prev_word == 'constantes':
-                if word == ':=' or ';':
-                    self.isError(i, word, self.open_end_cicle, self.open_init_cicle)
             try:
-                if word == self.t_errors[word] and self.v_cicle == False:
-                    self.open_end_cicle= True
-                    self.isError(i, word, self.open_end_cicle, self.open_init_cicle)
-                elif prev_word in self.t_errors:
+                if word in self.t_errors:
                     self.v_cicle= True
+                    word_init= word
+            except:
+                logging.info("The token is not a key")
+            try:
+                if self.t_errors[word] and self.v_cicle == False:
+                    self.open_end_cicle= True
+                    self.isError(i, self.t_errors[word_init], self.open_end_cicle, self.open_init_cicle)
+            except:
+                logging.info("The token is not a key")
+            try:
                 if self.v_cicle:
-                    if word == self.t_errors[word]:
+                    if word == self.t_errors[word_init]:
                         self.v_cicle= False
+                        word_init= ''
+            except:
+                logging.info("The token is not a key")
+            try:
                 if word == ';' and self.v_cicle == True:
                     self.open_init_cicle= True
-                    self.isError(i, word, self.open_end_cicle, self.open_init_cicle)
+                    self.isError(i, word_init, self.open_end_cicle, self.open_init_cicle)
             except: 
-                continue
+                logging.info("The token is not a key")
+            
             prev_word= word
+            if word == ';':
+                self.v_cicle= False
+            '''
+            if prev_line != current_line:
+                prev_line+= 1
+                self.v_cicle= False
+            '''
         return self.l_num_line, self.errors, self.l_descr_error, self.line_error
     
     def isError(self, i, word, open_end_cicle, open_init_cicle):

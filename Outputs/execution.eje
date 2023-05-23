@@ -1,0 +1,19 @@
+@
+1    LIT   "dame un numero: ", 0
+2    LIT   "factorial r]ecursivo i]nteractivo s]alir: ", 0
+3    LIT   "r", 0
+4    LIT   "r", 0
+5    LIT   "factorial recursivo de ", 0
+6    LIT   " es= ", 0
+7    LIT   "i", 0
+8    LIT   "i", 0
+9    LIT   "factorial iterativo de ", 0
+10   LIT   " es= ", 0
+11   LIT   "s", 0
+12   LIT   "s", 0
+13   LIT   "opcion invalida!!!", 0
+14   LIT   "s", 0
+15   LIT   "s", 0
+16   LIT   "dame tu nombre: ", 0
+17   LIT   "dame tu apellido: ", 0
+18   LIT   "villalvazo", 0

@@ -1,4 +1,10 @@
+'''
+Compiler
+@Author Eduardo Morales Vizcarra & Diego Alejandro Iñiguez
+'''
+
 import os
+import logging
 
 class Lexer:     
     def __init__(self, name_file):
@@ -21,6 +27,7 @@ class Lexer:
         self.t_cteEnt= 'CteEnt'
         self.t_ident= 'Ident'
         self.t_cteAlfa= 'CteAlfa'
+        self.t_cteLog= 'CteLog'
         self.delim= {'.': self.t_delim, ',': self.t_delim, ';': self.t_delim, '(': self.t_delim, ')': self.t_delim, '[': self.t_delim, ']': self.t_delim, ':': self.t_delim, '<nl>': self.t_delim, '<tab>': self.t_delim} # This are the delimiter
         self.opArit= {'+': self.t_opArit, '-': self.t_opArit, '*': self.t_opArit, '/': self.t_opArit, '%': self.t_opArit, '^': self.t_opArit} # These are arithmetic operators
         self.opRel={'=': self.t_opRel, '<>': self.t_opRel, '<': self.t_opRel, '>': self.t_opRel, '<=': self.t_opRel, '>=': self.t_opRel} # These are relational operators
@@ -64,7 +71,7 @@ class Lexer:
                        'falso': self.t_palRes} # These are reserved words
         self.opAsig= {':=': self.t_opAsig} # This is the assignation operator
         self.nums= '1234567890' # This are valid numbers
-        self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal, 'CteAlfa': self.t_cteAlfa}
+        self.ctes= {'CteEnt': self.t_cteEnt, 'CteReal': self.t_cteReal, 'CteAlfa': self.t_cteAlfa, 'CteLog': self.t_cteLog}
 
     def pass_lex(self, program):
         lexs= []
@@ -149,7 +156,10 @@ class Lexer:
                                         parm.pop(0)
                                     parm= "".join(parm)
                                     lexs.append(parm)
-                                    tokens.append(self.t_ident)
+                                    if(parm == 'verdadero' or 'falso'):
+                                        tokens.append(self.t_cteLog)
+                                    else:
+                                        tokens.append(self.t_ident)
                                     self.l_num_line.append(self.num_line)
                     elif not valid:
                         print("Number not valid") 
@@ -364,7 +374,10 @@ class Lexer:
         return isFloat, type
     
     def create_file(self, lexers, tokens):
-        os.remove(self.name_file)
+        try:
+            os.remove(self.name_file)
+        except:
+            logging.info("There's no file created")
         space_words= 50
         with open(self.name_file, "w") as f:
             f.write('--------------------------------------------------------\n')
