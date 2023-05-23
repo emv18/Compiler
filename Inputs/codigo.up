@@ -1,5 +1,5 @@
-constantes PI:=3.141592;
-	MAX:=30;
+constantes PI:=3.4u1592;
+	MAX:=30b;
 
 variables i, j, k, n:Entero;
           Alfa, Beta:Alfabetico;

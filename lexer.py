@@ -162,7 +162,7 @@ class Lexer:
                                         tokens.append(self.t_ident)
                                     self.l_num_line.append(self.num_line)
                     elif not valid:
-                        print("Number not valid") 
+                        logging.info("Number not valid") 
         self.create_file(lexs, tokens)
         return lexs, self.l_num_line
     
@@ -174,6 +174,11 @@ class Lexer:
         parms= []
         for char in word:
             if not self.v_alfa:
+                if (prev_char in self.nums or prev_char == '.') and (prev_char != '' and char != ';' and char != ')'):
+                    if char not in self.nums:
+                        print(str(word) + " - Not a valid number")
+                        valid= False
+                        break
                 if char == self.dot_comma: 
                     ident= "".join(ident)
                     if ident != '':
@@ -355,6 +360,7 @@ class Lexer:
                     isNumber, type= self.isFloat(word)
                     return isNumber, type
                 else: 
+                    print("not a valid number")
                     isNumber= False
                     return isNumber, type
             break

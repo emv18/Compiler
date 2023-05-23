@@ -32,7 +32,7 @@ class Compiler:
         errors= err.Error(self.err_file) # We instantiate the error class to create the error file
         errors.create_file(l_num_line, errors_l, l_descr_error, line_error)
 
-file_origin= './Inputs/caso7.up'
+file_origin= './Inputs/codigo.up'
 #file_origin= './Inputs/ExamenFinal.up'
 file_token= './Outputs/tokens.lex'
 file_errors= './Outputs/errors.err'
