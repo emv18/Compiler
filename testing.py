@@ -1,4 +1,4 @@
-a= "opcsfsddfsfs"
-if(a[0:3] == 'opc'):
-    print("funcioan")
+a= '45'
+for i in a:
+    print(i)
 #print(a[0:3])

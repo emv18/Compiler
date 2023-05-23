@@ -4,8 +4,11 @@ class Lexer:
     def __init__(self, name_file):
         self.name_file= name_file # This is the file with the code to analize
 
-        self.v_alfa= False
-        self.dot_comma= ';'
+        # These are tools
+        self.v_alfa= False # This helps us detect alfabetico
+        self.dot_comma= ';' 
+        self.num_line= 0
+        self.l_num_line= []
 
         # Tokens
         self.t_delim= 'delim'
@@ -67,47 +70,49 @@ class Lexer:
         lexs= []
         tokens= []
         for line in program:
+            self.num_line+= 1
             line_alfa= []
             if '"' not in line:
                 line= line.split(" ")
             else: 
                 line= list(line)
-                #print(line)
                 for c in line:
                     if line[0] == ' ':
                         line.pop(0)
                 line= "".join(line)
                 line_alfa.append(line)
                 line= line_alfa
-                #print(line)
             for word in line:
                 n= word.split("\t")
                 if(len(n)>1):
-                    #print(n)
                     for w in n:
                         if w != '':
                             word= w
                 word= word.lower()
                 s= list(word)
-                #print(s)
+                #print(word)
                 if word == "" or word == ' ' or word == "\t" or s[0] == '':
-                    #print("Aqui hay uno vacio")
                     continue
                 elif word in self.delim:
                     lexs.append(word)
                     tokens.append(self.delim[word])
+                    self.l_num_line.append(self.num_line)
                 elif word in self.opArit: 
                     lexs.append(word)
                     tokens.append(self.opArit[word])
+                    self.l_num_line.append(self.num_line)
                 elif word in self.opRel: 
                     lexs.append(word)
                     tokens.append(self.opRel[word])
+                    self.l_num_line.append(self.num_line)
                 elif word in self.opLog: 
                     lexs.append(word)
                     tokens.append(self.opLog[word])
+                    self.l_num_line.append(self.num_line)
                 elif word in self.palRes: 
                     lexs.append(word)
                     tokens.append(self.palRes[word])
+                    self.l_num_line.append(self.num_line)
                 else:
                     valid, parms= self.checkChar(word)
                     if valid: 
@@ -115,20 +120,27 @@ class Lexer:
                             s= list(parm)
                             if parm != '':
                                 first_ch= list(parm)[0]
-                            if first_ch in self.nums: lexs.append(parm)
-                            elif parm == self.t_cteEnt or parm == self.t_cteReal: tokens.append(parm)
+                            if first_ch in self.nums: 
+                                lexs.append(parm)
+                                self.l_num_line.append(self.num_line)
+                            elif parm == self.t_cteEnt or parm == self.t_cteReal: 
+                                tokens.append(parm)
                             elif parm in self.opAsig: 
                                 lexs.append(parm)
                                 tokens.append(self.opAsig[parm])
+                                self.l_num_line.append(self.num_line)
                             elif parm in self.delim:
                                 lexs.append(parm)
                                 tokens.append(self.delim[parm])
+                                self.l_num_line.append(self.num_line)
                             elif parm in self.palRes:
                                 lexs.append(parm)
                                 tokens.append(self.palRes[parm])
+                                self.l_num_line.append(self.num_line)
                             elif parm[0] == '"' and parm[-1] == '"':
                                 lexs.append(parm)
                                 tokens.append(self.t_cteAlfa)   
+                                self.l_num_line.append(self.num_line)
                             else:
                                 if parm != " ":
                                     parm= list(parm)
@@ -137,8 +149,12 @@ class Lexer:
                                         parm.pop(0)
                                     parm= "".join(parm)
                                     lexs.append(parm)
-                                    tokens.append(self.t_ident) 
+                                    tokens.append(self.t_ident)
+                                    self.l_num_line.append(self.num_line)
+                    elif not valid:
+                        print("Number not valid") 
         self.create_file(lexs, tokens)
+        return lexs, self.l_num_line
     
     def checkChar(self, word):
         prev_char= ''
@@ -155,6 +171,9 @@ class Lexer:
                     num= "".join(nums)
                     if num != '':
                         valid_num, num_type= self.isNumber(num)
+                        if not valid_num: 
+                            valid= False
+                            break
                         parms.append(num) 
                         if num_type != '':
                             parms.append(num_type)
@@ -174,6 +193,9 @@ class Lexer:
                             num= "".join(nums)
                             if num != '':
                                 valid_num, num_type= self.isNumber(num)
+                                if not valid_num: 
+                                    valid= False
+                                    break
                                 parms.append(num) 
                                 if num_type != '':
                                     parms.append(num_type)
@@ -189,6 +211,9 @@ class Lexer:
                     num= "".join(nums)
                     if num != '':
                         valid_num, num_type= self.isNumber(num)
+                        if not valid_num: 
+                            valid= False
+                            break
                         parms.append(num) 
                         if num_type != '':
                             parms.append(num_type)
@@ -204,6 +229,9 @@ class Lexer:
                     num= "".join(nums)
                     if num != '':
                         valid_num, num_type= self.isNumber(num)
+                        if not valid_num: 
+                            valid= False
+                            break
                         parms.append(num) 
                         if num_type != '':
                             parms.append(num_type)
@@ -222,6 +250,9 @@ class Lexer:
                     num= "".join(nums)
                     if num != '':
                         valid_num, num_type= self.isNumber(num)
+                        if not valid_num: 
+                            valid= False
+                            break
                         parms.append(num) 
                         if num_type != '':
                             parms.append(num_type)
@@ -242,6 +273,9 @@ class Lexer:
                         num= "".join(nums)
                         if num != '':
                             valid_num, num_type= self.isNumber(num)
+                            if not valid_num: 
+                                valid= False
+                                break
                             parms.append(num) 
                             if num_type != '':
                                 parms.append(num_type)
@@ -258,6 +292,9 @@ class Lexer:
                         num= "".join(nums)
                         if num != '':
                             valid_num, num_type= self.isNumber(num)
+                            if not valid_num: 
+                                valid= False
+                                break
                             parms.append(num) 
                             if num_type != '':
                                 parms.append(num_type)
@@ -277,6 +314,8 @@ class Lexer:
             num= "".join(nums)
             if num != '':
                 valid_num, num_type= self.isNumber(num)
+                if not valid_num: 
+                    valid= False
                 parms.append(num) 
                 if num_type != '':
                     parms.append(num_type)
@@ -288,11 +327,12 @@ class Lexer:
             num= "".join(nums)
             if num != '':
                 valid_num, num_type= self.isNumber(num)
+                if not valid_num: 
+                    valid= False
                 parms.append(num) 
                 if num_type != '':
                     parms.append(num_type)
             nums= []
-        if word[0:5] == 'hasta': print(word)
         return valid, parms
     
     def isNumber(self, word):      
@@ -337,7 +377,6 @@ class Lexer:
                 f.write(lexers[i])
                 while(space < space_words):
                     f.write(' ')
-                    #print(space)
                     space+= 1
                 f.write(tokens[i] + '\n') 
 

@@ -5,6 +5,7 @@ Compiler
 
 import lexer as lex
 import syntatic as syn
+import errorFile as err
 import fileReader as fr
 
 class Compiler:
@@ -18,9 +19,16 @@ class Compiler:
         program= file.readCode() 
         
         lexer= lex.Lexer(self.lex_file) # We instantiate the lexer class
-        lexer.pass_lex(program)
+        lexs, l_num_line= lexer.pass_lex(program)
 
-file_origin= './Inputs/codigo.eje'
+        syntactic= syn.Syntatic(lexs, l_num_line)
+        l_num_line, errors_l, l_descr_error, line_error= syntactic.passSyn()
+
+        errors= err.Error(self.err_file) # We instantiate the error class to create the error file
+        errors.create_file(l_num_line, errors_l, l_descr_error, line_error)
+
+file_origin= './Inputs/codigo.up'
+#file_origin= './Inputs/ExamenFinal.up'
 file_token= './Outputs/tokens.lex'
 file_errors= './Outputs/errors.err'
 compiler= Compiler(file_origin, file_token, file_errors)
