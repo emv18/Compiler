@@ -156,9 +156,9 @@ class Lexer:
                                         parm.pop(0)
                                     parm= "".join(parm)
                                     lexs.append(parm)
-                                    if(parm == 'verdadero' or 'falso'):
+                                    if(parm == 'verdadero' or parm == 'falso'):
                                         tokens.append(self.t_cteLog)
-                                    else:
+                                    else: 
                                         tokens.append(self.t_ident)
                                     self.l_num_line.append(self.num_line)
                     elif not valid:
@@ -383,7 +383,7 @@ class Lexer:
             f.write('--------------------------------------------------------\n')
             f.write('Lexema                                            Token\n')
             f.write('--------------------------------------------------------\n')
-            for i in range(len(lexers)):
+            for i in range(len(tokens)):
                 space= 0
                 for letter in lexers[i]:
                     space+= 1
